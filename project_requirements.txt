@@ -1,0 +1,8 @@
+Project Requirements
+- View (ID, Name, Course, Phone)
+- Insert record
+- update record
+- Delete record
+- Search record
+- Sort records
+
