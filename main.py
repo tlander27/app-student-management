@@ -9,6 +9,18 @@ import sys
 import sqlite3 as sql
 
 
+class DatabaseConnection:
+    """Connects to a sqlite3 database storing student data"""
+    def __init__(self, database_file="database.db"):
+        self.database_file = database_file
+
+    def connect(self):
+        connection = sql.connect(self.database_file)
+        # cursor = connection.cursor()
+        return connection
+
+
+
 class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
@@ -56,6 +68,7 @@ class MainWindow(QMainWindow):
 
 
     def cell_clicked(self):
+        """Captures data from a clicked cell in the window table"""
         edit_button = QPushButton("Edit Record")
         edit_button.clicked.connect(self.edit)
         delete_button = QPushButton("Delete Record")
@@ -72,7 +85,8 @@ class MainWindow(QMainWindow):
         self.statusbar.addWidget(delete_button)
 
     def load_data(self):
-        connection = sql.connect("database.db")
+        """Loads existing student data"""
+        connection = DatabaseConnection().connect()
         results = connection.execute("select * from students")
         # Avoid overwriting entries
         self.table.setRowCount(0)
@@ -84,27 +98,33 @@ class MainWindow(QMainWindow):
         connection.close()
 
     def insert(self):
+        """Initializes and executes InsertDialog"""
         dialog = InsertDialog()
         dialog.exec()
 
     def search(self):
+        """Initializes and executes SearchDialog"""
         search_dialog = SearchDialog()
         search_dialog.exec()
 
     def edit(self):
+        """Initializes and executes EditDialog"""
         dialog = EditDialog()
         dialog.exec()
 
     def delete(self):
+        """Initializes and executes DeleteDialog"""
         dialog = DeleteDialog()
         dialog.exec()
 
     def about(self):
+        """Initializes and executes AboutDialog"""
         dialog = AboutDialog()
         dialog.exec()
 
 
 class AboutDialog(QMessageBox):
+    """Displays about messagebox content"""
     def __init__(self):
         super().__init__()
         self.setWindowTitle("About")
@@ -112,7 +132,9 @@ class AboutDialog(QMessageBox):
                   "Demonstrates the use of OOP with a connection to a SQLite3 database."
         self.setText(content)
 
+
 class EditDialog(QDialog):
+    """Defines edit dialog layout and updates database records"""
     def __init__(self):
         super().__init__()
         self.setWindowTitle("Update Student Data")
@@ -157,7 +179,8 @@ class EditDialog(QDialog):
         self.setLayout(layout)
 
     def update_student(self):
-        connection = sql.connect("database.db")
+        """Updates selected student record"""
+        connection = DatabaseConnection().connect()
         cursor = connection.cursor()
         cursor.execute("update students set name = ?, course = ?, mobile = ? "
                        "where id = ?", (self.student_name.text(),
@@ -171,6 +194,7 @@ class EditDialog(QDialog):
 
 
 class DeleteDialog(QDialog):
+    """Defines delete dialog layout and deletes student reccord"""
     def __init__(self):
         super().__init__()
         self.setWindowTitle("Delete Student Data")
@@ -188,11 +212,12 @@ class DeleteDialog(QDialog):
         self.setLayout(layout)
 
     def delete_student(self):
+        """Captures selected student and deletes record from database"""
         # Get index and student Id from selected row
         index = window.table.currentRow()
         student_id = window.table.item(index, 0).text()
 
-        connection = sql.connect("database.db")
+        connection = DatabaseConnection().connect()
         cursor = connection.cursor()
         cursor.execute("delete from students where id = ?", (student_id, ))
         connection.commit()
@@ -209,6 +234,7 @@ class DeleteDialog(QDialog):
 
 
 class InsertDialog(QDialog):
+    """Defines insert dialog layout and inserts student record in database"""
     def __init__(self):
         super().__init__()
         self.setWindowTitle("Insert Student Data")
@@ -241,11 +267,12 @@ class InsertDialog(QDialog):
         self.setLayout(layout)
 
     def add_student(self):
+        """Captures data from dialog and inserts student record in database"""
         name = self.student_name.text()
         course = self.course_name.itemText(self.course_name.currentIndex())
         mobile = self.mobile.text()
 
-        connection = sql.connect("database.db")
+        connection = DatabaseConnection().connect()
         cursor = connection.cursor()
         cursor.execute("insert into students (name, course, mobile) "
                        "values (?,?,?)", (name, course, mobile))
@@ -257,6 +284,7 @@ class InsertDialog(QDialog):
 
 
 class SearchDialog(QDialog):
+    """Defines search dialog layout and queries database"""
     def __init__(self):
         super().__init__()
         self.setWindowTitle("Student Search")
@@ -277,8 +305,9 @@ class SearchDialog(QDialog):
         self.setLayout(layout)
 
     def search(self):
+        """Captures query parameters and highlights selected results within window table"""
         search_str = self.search_string.text().title()
-        connection = sql.connect("database.db")
+        connection = DatabaseConnection().connect()
         cursor = connection.cursor()
         query = "select * from students where name = ?"
         results = connection.execute(query, (search_str, ))
