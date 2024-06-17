@@ -102,7 +102,62 @@ class MainWindow(QMainWindow):
         pass
 
 class EditDialog(QDialog):
-    pass
+    def __init__(self):
+        super().__init__()
+        self.setWindowTitle("Update Student Data")
+        self.setFixedSize(300, 200)
+
+        layout = QVBoxLayout()
+        # Get student name from selected row
+        index = window.table.currentRow()
+        student_name = window.table.item(index, 1).text()
+
+        #get student Id from selected row
+        self.student_id = window.table.item(index, 0).text()
+
+        # Edit student name widget
+        self.student_name = QLineEdit(student_name)
+        self.student_name.setPlaceholderText("Name")
+        layout.addWidget(self.student_name)
+
+        # Get course from selected row
+        course_name = window.table.item(index, 2).text()
+        # Add courses combobox list
+        self.course_name = QComboBox()
+        courses = sorted(["Biology", "Software Engineering",
+                   "Math", "Astronomy", "Physics"])
+        self.course_name.addItems(courses)
+        # Set the selected course in combobox
+        self.course_name.setCurrentText(course_name)
+        layout.addWidget(self.course_name)
+
+        # Get current mobile from selected row
+        mobile = window.table.item(index, 3).text()
+        # Add mobile widget
+        self.mobile = QLineEdit(mobile)
+        self.mobile.setPlaceholderText("Mobile")
+        layout.addWidget(self.mobile)
+
+        # Add submit button
+        button = QPushButton("Update")
+        button.clicked.connect(self.update_student)
+        layout.addWidget(button)
+
+        self.setLayout(layout)
+
+    def update_student(self):
+        connection = sql.connect("database.db")
+        cursor = connection.cursor()
+        cursor.execute("update students set name = ?, course = ?, mobile = ? "
+                       "where id = ?", (self.student_name.text(),
+                                        self.course_name.itemText(self.course_name.currentIndex()),
+                                        self.mobile.text(),
+                                        self.student_id))
+        connection.commit()
+        cursor.close()
+        connection.close()
+        window.load_data()
+
 
 class DeleteDialog(QDialog):
     pass
